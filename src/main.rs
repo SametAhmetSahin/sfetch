@@ -3,28 +3,31 @@ use std::{process::Command, fs};
 use colored::Colorize;
 
 fn main() {
-    let whoami_c = Command::new("whoami").output().expect("Couldn't launch command whoami");
+    let whoami_c = Command::new("whoami").output().expect("Couldn't launch command uname -r");
     let whoami = String::from_utf8_lossy(&whoami_c.stdout);
 
-    /*
-    let hostname_c = Command::new("hostname").output().expect("Couldn't launch command hostnamectl");
-    let hostname = String::from_utf8_lossy(&hostname_c.stdout);
-    */
+    let hostname = match fs::read_to_string("/etc/hostname") {
+        Ok(hostname) => {hostname},
+        Err(_) => {"".to_string()},
+    };
 
-    let hostname = fs::read_to_string("/etc/hostname").expect("Couldn't read /etc/hostname");
+    let machinename = match fs::read_to_string("/sys/devices/virtual/dmi/id/product_family") {
+        Ok(machinename) => {machinename},
+        Err(_) => {"".to_string()},
+    };
 
-    // cat /sys/devices/virtual/dmi/id/product_family
-
-
-    let machinename = fs::read_to_string("/sys/devices/virtual/dmi/id/product_family").expect("Couldn't read /sys/devices/virtual/dmi/id/product_family");
-
-    let vendorname = fs::read_to_string("/sys/devices/virtual/dmi/id/sys_vendor").expect("Couldn't read /sys/devices/virtual/dmi/id/sys_vendor");
+    let vendorname = match fs::read_to_string("/sys/devices/virtual/dmi/id/sys_vendor") {
+        Ok(vendorname) => {vendorname},
+        Err(_) => {"".to_string()},
+    };
 
     let unamer_c = Command::new("uname").arg("-r").output().expect("Couldn't launch command uname -r");
     let kernelversion = String::from_utf8_lossy(&unamer_c.stdout);
-    //println!("meminfo output: {}", String::from_utf8_lossy(&meminfoc.stdout));
 
-    let uptime_content = fs::read_to_string("/proc/uptime").expect("Couldn't read /proc/uptime");
+    let uptime_content = match fs::read_to_string("/proc/uptime") {
+        Ok(uptime_content) => {uptime_content},
+        Err(_) => {"".to_string()},
+    };
     let uptime_content_splitted: Vec<&str> = uptime_content.split(" ").collect();
     let uptime_totalsecs_predot: Vec<&str> = uptime_content_splitted[0].split(".").collect();
 
@@ -33,12 +36,18 @@ fn main() {
     let uptimeh = uptime_totalsecs/3600;
     let uptimem = (uptime_totalsecs%3600)/60;
 
-    let osrelease_content = fs::read_to_string("/etc/os-release").expect("Couldn't read /etc/os-release");
+    let osrelease_content = match fs::read_to_string("/etc/os-release") {
+        Ok(osrelease_content) => {osrelease_content},
+        Err(_) => {"".to_string()},
+    };
     let osrelease_content_splitted: Vec<&str> = osrelease_content.split("\n").collect();
     let osname_splitted: Vec<&str> = osrelease_content_splitted[0].split("\"").collect();
     let osname = osname_splitted[1];
 
-    let meminfo_content = fs::read_to_string("/proc/meminfo").expect("Couldn't read /proc/meminfo");
+    let meminfo_content = match fs::read_to_string("/proc/meminfo") {
+        Ok(meminfo_content) => {meminfo_content},
+        Err(_) => {"".to_string()},
+    };
     let meminfo_content_splitted: Vec<&str> = meminfo_content.split("\n").collect();
     
     let totalmem_splitted: Vec<&str> = meminfo_content_splitted[0].split(" ").collect();
@@ -67,7 +76,5 @@ fn main() {
     println!("{} {usedmemg:>7}G / {totalmemg}G", "mem".to_string().blue(), usedmemg=usedmemg, totalmemg=totalmemg);
 
     println!("{} {}h {}m {}s", "uptime".to_string().blue(), uptimeh, uptimem, uptime_totalsecs%60);
-
-
 
 }
