@@ -33,8 +33,9 @@ fn main() {
 
     let uptime_totalsecs: usize = uptime_totalsecs_predot[0].parse().expect("Couldn't parse uptime, how?");
 
-    let uptimeh = uptime_totalsecs/3600;
-    let uptimem = (uptime_totalsecs%3600)/60;
+    let uptimed = uptime_totalsecs/(60*60*24);
+    let uptimeh = (uptime_totalsecs%(60*60*24))/3600;
+    let uptimem = (uptime_totalsecs%(60*60))/60;
 
     let osrelease_content = match fs::read_to_string("/etc/os-release") {
         Ok(osrelease_content) => {osrelease_content},
@@ -60,21 +61,35 @@ fn main() {
     let availablemem: usize = availablemem_splitted[availablemem_splitted.len()-2].parse().expect("Couldn't parse availablemem, how?");
     
     let usedmemg: f32 = (totalmem-(freemem+availablemem)) as f32/1024 as f32;
-    let usedmemg = (usedmemg/100.0).trunc()/10.0;
+    let usedmemg = (usedmemg/102.4).ceil().trunc()/10.0;
     let totalmemg: f32 = totalmem as f32 / 1024 as f32;
-    let totalmemg = (totalmemg/100.0).trunc()/10.0;
+    let totalmemg = (totalmemg/102.4).ceil().trunc()/10.0;
 
 
     println!("{}{}{}", whoami.trim().to_string().red(), "@".to_string().white(), hostname.trim().to_string().green());
 
-    println!("{} {osname:>16}","os".to_string().blue(), osname=osname);
+    println!("{label:<8} {osname:<16}", label="os".to_string().blue(), osname=osname);
 
-    println!("{} {vendorname:>8} {machinename:>8}", "host".to_string().blue(), vendorname=vendorname.trim(), machinename=machinename.trim());
+    println!("{label:<8} {vendorname} {machinename}", label="host".to_string().blue(), vendorname=vendorname.trim(), machinename=machinename.trim());
 
-    println!("{} {kernelver:>8}", "kernel".to_string().blue(), kernelver=kernelversion.trim());
+    println!("{label:<8} {kernelver:<16}", label="kernel".to_string().blue(), kernelver=kernelversion.trim());
 
-    println!("{} {usedmemg:>7}G / {totalmemg}G", "mem".to_string().blue(), usedmemg=usedmemg, totalmemg=totalmemg);
+    println!("{label:<8} {usedmemg}G / {totalmemg}G", label="mem".to_string().blue(), usedmemg=usedmemg, totalmemg=totalmemg);
 
-    println!("{} {}h {}m {}s", "uptime".to_string().blue(), uptimeh, uptimem, uptime_totalsecs%60);
+    let mut uptimestring: String = String::from("");
+
+    if uptimed != 0 {
+        uptimestring += format!("{}d ", uptimed).as_str();
+    }
+    if uptimeh != 0 {
+        uptimestring += format!("{}h ", uptimeh).as_str();
+    }
+    if uptimem != 0 {
+        uptimestring += format!("{}m ", uptimem).as_str();
+    }
+    uptimestring += format!("{}s ", uptime_totalsecs%60).as_str();
+    
+
+    println!("{label:<8} {uptimestring}", label="uptime".to_string().blue(), uptimestring=uptimestring);
 
 }
